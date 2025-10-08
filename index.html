@@ -731,7 +731,7 @@
             
             dropdown.innerHTML = filteredMembers.length > 0 
                 ? filteredMembers.map(member => 
-                    `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" onclick="selectChair(${member.id})">${member.name}</div>`
+                    `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" onclick="selectChair(${member.id})">${member.name} <span class="text-gray-400 text-xs">(${member.division})</span></div>`
                   ).join('')
                 : `<div class="px-4 py-2 text-gray-500">Tidak ada hasil ditemukan</div>`;
 
@@ -745,7 +745,7 @@
             const container = document.getElementById('eventChairInputContainer');
             document.getElementById('eventChairId').value = member.id;
             
-            container.innerHTML = `<div class="tag">${member.name}<span class="tag-remove" onclick="event.stopPropagation(); removeSelectedChair();">×</span></div>`;
+            container.innerHTML = `<div class="tag">${member.name} <span class="font-normal opacity-75">(${member.division})</span><span class="tag-remove" onclick="event.stopPropagation(); removeSelectedChair();">×</span></div>`;
             document.getElementById('eventChairDropdown').classList.add('hidden');
         }
 
@@ -1311,7 +1311,7 @@
             );
             
             dropdown.innerHTML = filteredMembers.map(member => 
-                `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" onclick="selectBatchChair(${member.id}, ${counter})">${member.name}</div>`
+                `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" onclick="selectBatchChair(${member.id}, ${counter})">${member.name} <span class="text-gray-400 text-xs">(${member.division})</span></div>`
             ).join('');
             dropdown.classList.remove('hidden');
         }
@@ -1322,7 +1322,7 @@
             
             const container = document.getElementById(`batch-chair-container-${counter}`);
             container.parentElement.querySelector('.batch-sc-chair-id').value = member.id;
-            container.innerHTML = `<div class="tag">${member.name}<span class="tag-remove" onclick="event.stopPropagation(); setupBatchChairInput(${counter});">×</span></div>`;
+            container.innerHTML = `<div class="tag">${member.name} <span class="font-normal opacity-75">(${member.division})</span><span class="tag-remove" onclick="event.stopPropagation(); setupBatchChairInput(${counter});">×</span></div>`;
             document.getElementById(`batch-chair-dropdown-${counter}`).classList.add('hidden');
             
             populateBatchMembersDropdown(counter, '');
@@ -1345,7 +1345,7 @@
             );
             
             dropdown.innerHTML = filteredMembers.map(member => 
-                `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" onclick="selectBatchMember(${member.id}, ${counter})">${member.name}</div>`
+                `<div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" onclick="selectBatchMember(${member.id}, ${counter})">${member.name} <span class="text-gray-400 text-xs">(${member.division})</span></div>`
             ).join('');
             dropdown.classList.remove('hidden');
         }
@@ -1356,7 +1356,7 @@
 
             const container = document.getElementById(`batch-members-container-${counter}`);
             const searchInput = container.querySelector(`#batch-members-search-${counter}`);
-            const tagHtml = `<div class="tag" data-id="${memberId}">${member.name}<span class="tag-remove" onclick="event.stopPropagation(); this.parentElement.remove();">×</span></div>`;
+            const tagHtml = `<div class="tag" data-id="${memberId}">${member.name} <span class="font-normal opacity-75">(${member.division})</span><span class="tag-remove" onclick="event.stopPropagation(); this.parentElement.remove();">×</span></div>`;
             
             searchInput.insertAdjacentHTML('beforebegin', tagHtml);
             searchInput.value = '';
