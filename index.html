@@ -456,8 +456,50 @@
         let confirmAction = null;
         let batchFormCounter = 0;
 
+        // --- UTILITY FUNCTIONS ---
+        // Menambahkan detail anggota (seperti divisi) ke data event awal
+        function hydrateEventData() {
+            events.forEach(event => {
+                event.committees.forEach(committee => {
+                    if (committee.chair && committee.chair.id) {
+                        const chairMember = members.find(m => m.id === committee.chair.id);
+                        if (chairMember) committee.chair = { ...chairMember };
+                    }
+                    if (committee.members) {
+                        committee.members = committee.members.map(member => {
+                            if (member.id) {
+                                const fullMember = members.find(m => m.id === member.id);
+                                return fullMember ? { ...fullMember } : member;
+                            }
+                            return member;
+                        });
+                    }
+                    if (committee.subcommittees) {
+                        committee.subcommittees.forEach(sc => {
+                            if (sc.chair && sc.chair.id) {
+                                const chairMember = members.find(m => m.id === sc.chair.id);
+                                if (chairMember) sc.chair = { ...chairMember };
+                            }
+                            if (sc.members) {
+                                sc.members = sc.members.map(member => {
+                                    if (member.id) {
+                                        const fullMember = members.find(m => m.id === member.id);
+                                        return fullMember ? { ...fullMember } : member;
+                                    }
+                                    return member;
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', function() {
+            hydrateEventData(); // Memastikan data awal konsisten
+            
             // Animate the title on the login page
             const titleContainer = document.getElementById('loginTitle');
             const titleText = "Eventra";
@@ -862,7 +904,7 @@
             const contentEl = document.getElementById('committeeDetailContent');
 
             const membersList = subcommittee.members.length > 0 
-                ? subcommittee.members.map(m => `<li class="text-gray-700">${m.name}</li>`).join('') 
+                ? subcommittee.members.map(m => `<li class="text-gray-700">${m.name} <span class="text-gray-500">(${m.division})</span></li>`).join('') 
                 : '<li class="text-gray-500">Tidak ada anggota.</li>';
             
             const tasksList = subcommittee.tasks.length > 0 ? subcommittee.tasks.map(t => {
@@ -882,7 +924,7 @@
             contentEl.innerHTML = `
                 <div class="mb-4">
                     <h4 class="font-bold text-lg text-gray-800">Ketua Bidang</h4>
-                    <p class="text-gray-700">${subcommittee.chair.name}</p>
+                    <p class="text-gray-700">${subcommittee.chair.name} <span class="text-gray-500">(${subcommittee.chair.division})</span></p>
                 </div>
                 <div class="mb-4">
                     <h4 class="font-bold text-lg text-gray-800">Anggota Bidang</h4>
@@ -934,7 +976,7 @@
             container.innerHTML = events.length === 0 ? `<div class="text-center text-gray-500 p-4">Belum ada event.</div>` :
                 events.map((eventData, index) => { 
                     const committee = eventData.committees[0];
-                    if (!committee) return ''; 
+                    if (!committee || !committee.chair) return ''; 
 
                     const allTasks = (committee.subcommittees || []).flatMap(sc => sc.tasks);
                     const completedTasks = allTasks.filter(t => t.status === 'completed').length;
@@ -944,7 +986,7 @@
                         ? (committee.subcommittees || []).map(sc => `
                             <div class="bg-white p-3 rounded-lg border hover:bg-sky-50 cursor-pointer" onclick="openSubcommitteeDetailModal(${eventData.id}, ${committee.id}, ${sc.id})">
                                 <p class="font-semibold text-gray-800">${sc.name}</p>
-                                <p class="text-xs text-gray-500">Ketua: ${sc.chair.name}</p>
+                                <p class="text-xs text-gray-500">Ketua: ${sc.chair.name} (${sc.chair.division})</p>
                             </div>
                         `).join('')
                         : '<p class="text-sm text-gray-500">Belum ada bidang yang dibuat.</p>';
@@ -967,7 +1009,7 @@
                         <div id="details-${index}" class="details-container mt-4 pt-4 border-t">
                              <div class="mb-4">
                                 <h4 class="font-semibold text-sm mb-1 text-gray-600">Ketua Panitia:</h4>
-                                <p class="font-medium text-gray-900">${committee.chair.name}</p>
+                                <p class="font-medium text-gray-900">${committee.chair.name} <span class="text-gray-500 font-normal">(${committee.chair.division})</span></p>
                              </div>
                              <h4 class="font-semibold text-sm mb-2 text-gray-600">Bidang yang Dibuat:</h4>
                              <div class="space-y-2 mb-4">${subcommitteesHtml}</div>
@@ -1013,7 +1055,7 @@
             const dashboardView = document.getElementById("anggotaDashboardView");
             dashboardView.classList.remove("hidden");
             const loggedInId = loggedInUser.id;
-            document.getElementById("currentUser").textContent = `${loggedInUser.name}`;
+            document.getElementById("currentUser").textContent = `${loggedInUser.name} (${loggedInUser.division})`;
             const myEvents = events.filter(event => 
                 event.committees.some(c => 
                     c.chair?.id === loggedInId || 
@@ -1183,7 +1225,7 @@
                     const membersListContainer = document.getElementById("mySubcommitteeMembersList");
                     if (mySubcommittee.members && mySubcommittee.members.length > 0) {
                         membersListContainer.innerHTML = mySubcommittee.members.map(member => 
-                            `<div class="bg-gray-100 p-2 rounded-md text-gray-800 text-sm font-medium">${member.name}</div>`
+                            `<div class="bg-gray-100 p-2 rounded-md text-gray-800 text-sm font-medium">${member.name} <span class="text-gray-500 font-normal">(${member.division})</span></div>`
                         ).join('');
                     } else {
                         membersListContainer.innerHTML = `<p class="text-gray-500 text-sm">Belum ada anggota di bidang ini.</p>`;
@@ -1195,7 +1237,7 @@
                 const mySubcommittee = committee.subcommittees.find(sc => sc.members.some(m => m.id === loggedInUser.id));
                 if (mySubcommittee) {
                     document.getElementById("myAnggotaSubcommitteeName").textContent = mySubcommittee.name;
-                    document.getElementById("myAnggotaSubcommitteeChair").textContent = mySubcommittee.chair.name;
+                    document.getElementById("myAnggotaSubcommitteeChair").textContent = `${mySubcommittee.chair.name} (${mySubcommittee.chair.division})`;
                 }
                 renderMyTasks(event, committee);
             }
@@ -1518,7 +1560,7 @@
                     }).join('');
                     return `<div class="border rounded-xl p-4 bg-sky-50/50 mb-4">
                                 <h4 class="font-bold text-gray-800 mb-2 text-lg">${sc.name}</h4>
-                                <p class="text-sm text-gray-600 mb-3">Ketua: <span class="font-medium">${sc.chair.name}</span></p>
+                                <p class="text-sm text-gray-600 mb-3">Ketua: <span class="font-medium">${sc.chair.name} (${sc.chair.division})</span></p>
                                 <div class="space-y-3">${tasksHtml}</div>
                             </div>`;
                 }).join("");
